@@ -1,0 +1,53 @@
+---
+title: "Homework Two -- GWAS"
+author: "Alex Edwards"
+date: "9/28/2016"
+output: pdf_document
+---
+
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+load("GenABEL_GWAS1.RData")
+ls() 
+library(GenABEL)
+
+#Clean the data from duplicate rows
+SNPNames1=snpnames(GWAS1)
+SNPNames2=SNPNames1[!(SNPNames1 %in% c("rs4886982", "rs7965657"))] # remove SNPs from the datasets - 2*2=4 SNP columns 
+GWAS2<-GWAS1[phdata(GWAS1)$inferred_population == "Cauc",SNPNames2] 
+
+qc1 <- check.marker(GWAS2, callrate = 0.95, maf = 0.1, perid.call = 0.95, p.level = 0.0001 )
+
+GWAS.qc1 <- GWAS2[qc1$idok,qc1$snpok] # save cleaned samples/SNPs in a new GWAS dataset - GWAS.qc1 
+
+model <- qtscore(CYP2D6_activity, GWAS.qc1, trait = "gaussian")
+
+ds <- descriptives.scan(model, sort="P1df")[1:10,]
+ds1 <- ds[1:10]
+ds2 <- ds
+ds2[8:11] <- list(NULL)
+class(ds) 
+
+
+lambda(model)
+estlambda(model[, "P1df"])
+estlambda(model[, "P2df"])
+```
+
+
+#Results
+```{r, echo=FALSE, results='asis',out.width='\\textwidth', warning=FALSE}
+library(knitr)
+kable(ds1[1:10,], caption= "Top Ten Associations P1df",digits = 1)
+kable(ds2[1:10,], caption= "Top Ten Associations P2df",digits = 1)
+```
+
+#Inflation Factor
+```{r}
+lambda(model)
+estlambda(model[, "P1df"])
+estlambda(model[, "P2df"])
+```
+
+#QQ-Plot
+![QQ-Plot](QQPlot.jpg)
